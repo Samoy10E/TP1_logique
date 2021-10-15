@@ -1,23 +1,23 @@
 class SatSolver:
 
     #Variable à initialiser
-    clauseToInt: List[List]
+    clauseToLit: List[List]
     heuristique: Fonction
     satisfiableOuSolution: bool
 
     #Variable interne
     nombreNoeud: int
-    etatClause: List[List[bool]]
+    etatClause: List[int]
     pileLit: Pile[tuple]
     etatLit: List[bool]
     lenClause: List[List[int]]
 
-    def __init__(self,):
-        self.clauseToInt = clauseToInt
+    def __init__(self,clauseToLit : List[List],heuristique : Fonction,satisfiableOuSolution : bool):
+        self.clauseToLit = clauseToLit
         self.heuristique = heuristique
         self.satisfiableOuSolution = satisfiableOuSolution
 
-    def solveur(self,clauseToInt : List[List], heuristique : Fonction, satisfiableOuSolution : bool):
+    def solveur(self):
         # TODO Ecrire le solveur
         if self.satisfiableOuSolution:
             return #vrai ou faux

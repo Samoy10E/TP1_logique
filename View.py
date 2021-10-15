@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 class View(ABC):
 
     nomProblemeCourant: string
-    problemeCourant: clauseToInt
+    problemeCourant: clauseToLit
 
     nomHeuristiqueCourante: string
     heuristiqueCourante: fonction
@@ -55,4 +55,16 @@ class View(ABC):
     @abstractmethod
     def compare(self):
         #TODO plot plusieurs analyse
+        pass
+
+class ViewConsole(View):
+
+    def affiche(self,nomProbleme_nomHeuristiqe_taille: string):
+        # TODO en fonction de model (bool ou non) affiche:
+        # TODO affiche temps d'execution
+        # TODO affiche nombre de noeud
+        pass
+
+    def compare(self):
+        # TODO plot plusieurs analyse
         pass
