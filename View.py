@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Callable, Dict, Tuple, Union
 
+import generators
+
 """
 Abstract class, manage views and controls
 """

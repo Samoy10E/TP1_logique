@@ -1,13 +1,12 @@
 from generators import pigeonProblem
 from View import ViewConsole
+from satSolver import SatSolver
 
 def main():
 
-    pigeonProblem.generate_file(3)
-    VC = ViewConsole()
-    test = True
-    while test:
-        test = VC.action()
+    clauses = pigeonProblem.generate_clauses(3)
+    SATsolv = SatSolver(clauses)
+    SATsolv.solve()
 
 if __name__ == '__main__':
     main()
