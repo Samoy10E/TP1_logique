@@ -19,27 +19,46 @@ class SatSolver:
     """
 
     def __init__(self, list_clauses, heuristique = "base"):
+
         self.heuristique = heuristique
         self.nb_lit = 0
+
+        # On cherche le nombre de littéraux
         for clause in list_clauses:
             if max(clause) > self.nb_lit:
                 self.nb_lit = max(clause)
+        # Le nombre de littéraux doit être pair (+ et -)
         if self.nb_lit % 2 == 0:
             self.nb_lit += 1
+
         self.nb_clauses = len(list_clauses)
         self.clause_to_lit = list_clauses
-        self.lit_to_clause = [[[] for i in range(2 * self.nb_lit)]]
-        for i in range(self.nb_lit):
-            for j in range(self.nb_clauses):
-                if i in self.clause_to_lit[j]:
-                    self.lit_to_clause[i].append(j)
 
-        self.etat_clauses = [0 for i in range(self.nb_clauses)]
-        self.etat_lit = [None for i in range(self.nb_lit)]
+        # On crée la matrice littéraux->clauses
+        self.lit_to_clause = [[]]*self.nb_lit
+        for iclause in range(len(list_clauses)):
+            for lit in list_clauses[iclause]:
+                self.lit_to_clause[lit].append(iclause)
+
+        # liste de la profondeur où la clause i a été vrai
+        self.etat_clauses = [0]*self.nb_clauses
+
+        # état les littéraux actuels
+        self.etat_lit = [None]*self.nb_lit
+
+        # longueurs des clauses
         self.len_clauses = [len(clause) for clause in self.clause_to_lit]
+
+        # pile des noeuds à traiter (n°lit, autre côté à faire (bool) )
         self.pile_traitement = []
+
+        # profondeur actuel
         self.profondeur = 0
+
+        # nombre de noeud parcouru
         self.nb_noeud = 0
+
+        # condition d'arrêt du programme
         self.stop = False
 
     def solve(self):
@@ -55,19 +74,22 @@ class SatSolver:
 
     def verif(self):
         #cherche des erreur pour backtrack si besoin
-        for longueur in self.len_clauses:
-            if len == 0:
-                return False
+        if 0 in self.len_clauses:
+            return False
         return True
 
     def backtrack(self):
-        #annule le dernier changement
-        last_change = self.pile_traitement.pop(-1)
-        self.etat_lit[last_change[0]] = None
+        # On réinitialise les clauses validées à la profondeur précédente
         for i in self.lit_to_clause:
             if self.etat_clauses[i] == self.profondeur:
                 self.etat_clauses[i] = 0
+
         self.profondeur -= 1
+
+        #annule le dernier changement de littéral
+        last_change = self.pile_traitement.pop()
+        self.etat_lit[last_change[0]] = None
+
         if last_change[0] % 2 == 0:
             self.etat_lit[last_change[0]+1] = None
             for i in self.lit_to_clause:
@@ -76,11 +98,12 @@ class SatSolver:
             self.etat_lit[last_change[0]-1] = None
             for i in self.lit_to_clause:
                 self.len_clauses[i] += 1
-        #fait un nouveau changement si nécéssaire
+
+        #fait un nouveau changement si nécessaire
         if last_change[1]:
             self.lit_set(last_change[0], False)
         elif not last_change[2]:
-            #s'arrète si fond de l'arbre
+            # s' arrête si racine de l' arbre
             if self.profondeur == 0:
                 self.stop = True
                 return

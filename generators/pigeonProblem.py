@@ -3,7 +3,7 @@ from pathlib import Path
 Generate clauses from the pigeons problem
 """
 
-def generate_clauses(n: int):
+def pigeons_generate_clauses(n: int):
     """
     Give conditions to the pigeons problem:
         -each pigeons have one hole
@@ -37,7 +37,7 @@ def generate_clauses(n: int):
     clauses = clauses + clauses_at_least_one_hole + clauses_at_the_most_one_hole
     return clauses
 
-def generate_file(n: int):
+def pigeons_generate_file(n: int):
 
     #If the problem has not been already generate, generate it and st
 

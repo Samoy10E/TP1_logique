@@ -43,8 +43,8 @@ class View(ABC):
         self.ProblemeCrourant = clauses
         self.nomProblemeCourant = nomFichier
 
-    def select_generateur(self, nomFonctionGenerateur: Callable, nomGenerateur: str, n: int) -> List[List[int]]:
-        self.ProblemeCrourant = nomFonctionGenerateur(n)
+    def select_generateur(self, nomGenerateur: str) -> List[List[int]]:
+        self.ProblemeCrourant = listeGenerateur(nomGenerateur)
         self.nomProblemeCourant = nomGenerateur
 
     def select_heuristique(self,heuristique : Callable):
@@ -92,6 +92,28 @@ class ViewConsole(View):
             return False
         elif entre in ["aide","help"]:
             print("Pour sortir taper 'sortie'")
+        elif entre in ["generateur","g?"]:
+            noms = liste_generateur()
+            print(noms)
+        else:
+            commande = entre.split(" ")
+            if commande[0] in ["solve", "-s"]:
+                satifaisable = bool(commande[1])
+                if commande[2] in ["fichier","-f"]:
+                    self.select_fichier(commande[3])
+                    i = 4
+                elif commande[2] in ["generateur","-g"]:
+                    self.select_generateur(commande[3],commande[4])
+                    i = 5
+
+                if i<len(commande) and commande[i] in ["heuristique","-h"]:
+                    self.select_heuristique(commande[i+1])
+
+            print(self.nomProblemeCourant)
+
+
+
+
         return True
 
     def affiche(self,nomProbleme_nomHeuristiqe_taille: str):
