@@ -3,17 +3,21 @@ from typing import List, Callable, Dict, Tuple, Union
 def firstSatisfy(Solveur):
     litMax = 0
     for lit in range(Solveur.nb_lit):
-        if Solveur.rep_lit[lit]>Solveur.rep_lit[lit] and Solveur.etat_prop[lit//2] is None:
+        if Solveur.rep_lit[lit]>Solveur.rep_lit[litMax] and Solveur.etat_prop[lit//2] is None:
             litMax = lit
     return litMax
 
 def firstFail(Solveur):
-    return Solveur.rep_lit.index(min(Solveur.rep_lit))
+    litMin = Solveur.nb_lit-1
+    for lit in range(Solveur.nb_lit):
+        if Solveur.rep_lit[lit]<Solveur.rep_lit[litMin] and Solveur.etat_prop[lit // 2] is None:
+            litMin = lit
+    return litMin + 1 - 2*int(litMin%2==1)
 
 def base(Solveur):
-    for i,n in enumarate(Solveur.rep_lit):
-        if not n and Solveur.etat_prop[i//2] is not None:
-            return i
+    for lit in range(Solveur.nb_lit):
+        if Solveur.etat_prop[lit//2] is None:
+            return lit
 
 class SatSolver:
     """
@@ -32,6 +36,10 @@ class SatSolver:
     nb_noeud = 0                     nombre de noeud parcouru lors de l'algorithme
     Stop = Bool                      Bool condition d'arret du programme si on ne trouve pas de modèle aprés un parcours complet
     """
+
+    @property
+    def profondeur(self):
+        return len(self.pile_traitement)
 
     def __init__(self, list_clauses, toutModels = True, heuristique = base):
 
@@ -78,9 +86,6 @@ class SatSolver:
         # pile des noeuds à traiter (n°lit, autre côté à faire (bool) )
         self.pile_traitement = []
 
-        # profondeur actuel
-        self.profondeur = 0
-
         # nombre de noeud parcouru
         self.nb_noeud = 0
 
@@ -90,6 +95,8 @@ class SatSolver:
     def solve(self):
 
         while not self.stop:
+            # if self.nb_noeud%10==0:
+            #     print(self.nb_noeud)
             """Itération"""
             # Si il y a une solution on retourne la solution et/ou on backtrack pour continuer
             if 0 not in self.etat_clauses:
@@ -106,7 +113,6 @@ class SatSolver:
 
             else:
                 # On descant dans l' arbre
-                self.profondeur += 1
 
                 # On cherche le prochain littéraux à évaluer
                 lit = self.heuristiqueGlobale()
@@ -114,6 +120,7 @@ class SatSolver:
                 # On ajoute l' opération à effectuer la prochaine fois qu' on passera sur ce noeud
 
                 self.pile_traitement.append((lit, True))
+                self.nb_noeud += 1
 
                 # Mise à jour des clauses
 
@@ -129,8 +136,6 @@ class SatSolver:
 
     def backtrack(self):
         """On remonte"""
-        # On remonte dans l' arbre
-        self.profondeur -= 1
 
         lit, op = self.pile_traitement.pop()
 
@@ -149,7 +154,6 @@ class SatSolver:
 
             """On remonte"""
             # On remonte dans l' arbre
-            self.profondeur -= 1
 
             # On backtrack
             lit, op = self.pile_traitement.pop()
@@ -160,13 +164,15 @@ class SatSolver:
                 return
 
         # Sinon on prend l' autre chemin
+        litbis = lit + 1 - 2 * int(lit%2 == 1)
+
+
+        # Ajout à la pile d' opération
+        self.pile_traitement.append((litbis,False))
+        self.nb_noeud += 1
 
         # On annules les changements
         self.majClause(lit, True)
-
-        litbis = lit + 1 - 2 * int(lit%2 == 1)
-
-        self.profondeur += 1
 
         # On affecte une valuation au littérale l
         self.etat_prop[lit // 2] = not self.etat_prop[lit // 2]
@@ -174,34 +180,30 @@ class SatSolver:
         # On met à jour les clauses
         self.majClause(litbis, False)
 
-        # Ajout à la pile d' opération
-        self.pile_traitement.append((litbis,False))
 
         # On reprend l' itération
 
     def majClause(self, lit, backtrack):
         # On met à jour l' état des clauses
         for iClause in self.lit_to_clause[lit]:
-            self.etat_clauses[iClause] = self.profondeur*(1-backtrack)
-            for l in self.clause_to_lit[iClause]:
-                if self.etat_prop[l//2] is None:
-                    self.rep_lit[l] -= 1 + 2*backtrack
+            if self.etat_clauses[iClause] >= self.profondeur or self.etat_clauses[iClause] == 0:
+                self.etat_clauses[iClause] = int(1-backtrack)*self.profondeur
+                for l in self.clause_to_lit[iClause]:
+                    if self.etat_prop[l//2] is None or backtrack:
+                        self.rep_lit[l] -= (1 - 2*backtrack)
 
         # On met à jour la longueur des clauses
-        litbis = int(lit + 1 - 2 * lit%2==0)
+        litbis = lit + 1 - 2 * int(lit%2==1)
 
         for iClause in self.lit_to_clause[litbis]:
             self.len_clauses[iClause] -= (1 - 2*int(backtrack))
-            for l in self.clause_to_lit[iClause]:
-                if self.etat_prop[l//2] is None:
-                    self.rep_lit[l] -= 1 + 2*backtrack
 
 
     def heuristiqueGlobale(self) -> int:
         # Littéraux pur ou mono littoraux
         for i, lenClause in enumerate(self.len_clauses):
             # Si il y a une clause de longueur 1
-            if lenClause == 1:
+            if lenClause == 1 and self.etat_clauses[i] == 0:
                 # On cherche le littéral par encore évalué
                 for lit in self.clause_to_lit[i]:
                     if self.etat_prop[lit//2] is None:
@@ -211,7 +213,7 @@ class SatSolver:
             # Si il y a une clause de longueur 1
             if nLit == 0 and self.etat_prop[lit//2] is None:
                 # On retourne le littérale opposé
-                return lit + 1 - 2*(lit%2==1)
+                return lit + 1 - 2*int(lit%2==1)
 
         # retourne heuristique
         return self.heuristique(self)
